@@ -1,0 +1,99 @@
+@import "tailwindcss";
+
+@theme inline {
+  --font-sans: var(--font-outfit);
+  --font-display: var(--font-fraunces);
+  --color-forest: #143028;
+  --color-forest-deep: #0c221b;
+  --color-leaf: #2c6a4a;
+  --color-clay: #d85a2a;
+  --color-clay-deep: #b8431c;
+  --color-gold: #c8963e;
+  --color-cream: #f3eee6;
+  --color-paper: #fffdf9;
+  --color-ink: #1c1714;
+  --color-stone: #6d655d;
+  --color-line: #e3dbd0;
+  --color-well: #ebe4d8;
+  --color-danger: #8e2d2d;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background: var(--color-cream);
+  color: var(--color-ink);
+  font-family: var(--font-outfit), "Avenir Next", "Segoe UI", sans-serif;
+  text-rendering: optimizeLegibility;
+}
+
+::selection {
+  background: #e7c9a4;
+}
+
+:focus-visible {
+  outline: 2px solid #143028;
+  outline-offset: 2px;
+}
+
+.font-display {
+  font-family: var(--font-fraunces), "Iowan Old Style", Palatino, serif;
+  font-optical-sizing: auto;
+}
+
+.cloth {
+  background-color: #143028;
+  background-image:
+    radial-gradient(circle at 1px 1px, rgba(200, 150, 62, 0.45) 1px, transparent 1.4px),
+    linear-gradient(rgba(255, 253, 249, 0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 253, 249, 0.04) 1px, transparent 1px);
+  background-size: 22px 22px, 22px 22px, 22px 22px;
+}
+
+.prose-market h2,
+.prose-market h3 {
+  font-family: var(--font-fraunces), Palatino, serif;
+  margin: 1.4em 0 0.4em;
+  line-height: 1.2;
+}
+
+.prose-market p,
+.prose-market li {
+  margin: 0.7em 0;
+  line-height: 1.7;
+}
+
+.prose-market a {
+  color: #2c6a4a;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.prose-market ul,
+.prose-market ol {
+  padding-left: 1.2em;
+}
+
+.prose-market ul {
+  list-style: disc;
+}
+
+.prose-market ol {
+  list-style: decimal;
+}
+
+.prose-market strong {
+  font-weight: 650;
+}
+
+input,
+select,
+textarea {
+  font: inherit;
+}
+
+input[type="search"]::-webkit-search-cancel-button {
+  appearance: none;
+}
