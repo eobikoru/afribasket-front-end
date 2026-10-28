@@ -2,7 +2,7 @@
 
 import { useQuery } from "@tanstack/react-query";
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { LogoMark } from "@/components/logo";
 import { ProductGrid } from "@/components/product-card";
 import { EmptyState, Skeleton } from "@/components/ui";
@@ -200,41 +200,114 @@ export function HomeScreen() {
 
 function BannerRail({ banners }: { banners: { id: string; title: string; subtitle: string | null; imageUrl: string; linkUrl: string | null }[] }) {
   const [index, setIndex] = useState(0);
+  const touchX = useRef<number | null>(null);
+  const swiped = useRef(false);
+  const count = banners.length;
+
   useEffect(() => {
-    if (banners.length < 2) return;
-    const timer = window.setInterval(() => setIndex((value) => (value + 1) % banners.length), 6500);
+    if (count < 2) return;
+    const timer = window.setInterval(() => setIndex((value) => (value + 1) % count), 6500);
     return () => window.clearInterval(timer);
-  }, [banners.length]);
+  }, [count]);
+
+  function go(next: number) {
+    setIndex((next + count) % count);
+  }
+
   const banner = banners[index];
-  const inner = (
-    <div className="relative min-h-[22rem] overflow-hidden bg-forest sm:min-h-[26rem]">
+  const slide = (
+    <div className="relative h-[78vw] max-h-[28rem] min-h-[20rem] overflow-hidden bg-forest sm:h-[26rem]">
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img src={banner.imageUrl} alt="" className="absolute inset-0 h-full w-full object-cover" />
-      <div className="absolute inset-0 bg-gradient-to-r from-forest/85 via-forest/45 to-transparent" />
-      <div className="relative mx-auto flex min-h-[22rem] max-w-6xl flex-col justify-end px-4 py-10 sm:min-h-[26rem]">
-        <h1 className="font-display max-w-xl text-5xl leading-[0.95] text-cream sm:text-6xl">{banner.title}</h1>
-        {banner.subtitle ? <p className="mt-4 max-w-md text-lg text-cream/85">{banner.subtitle}</p> : null}
-        <span className="mt-6 inline-flex w-fit rounded-md bg-clay px-5 py-3 text-sm font-semibold text-white">Shop now</span>
+      <div className="absolute inset-0 bg-gradient-to-t from-forest via-forest/55 to-forest/15" />
+      <div className="relative mx-auto flex h-full max-w-6xl flex-col justify-end px-16 pb-16 pt-8 sm:px-20">
+        <h1 className="font-display max-w-xl text-[1.85rem] leading-tight text-cream sm:text-5xl lg:text-6xl">{banner.title}</h1>
+        {banner.subtitle ? <p className="mt-3 max-w-md text-base leading-relaxed text-cream/90 sm:mt-4 sm:text-lg">{banner.subtitle}</p> : null}
+        <span className="mt-5 inline-flex w-fit rounded-md bg-clay px-5 py-3 text-sm font-semibold text-white">Shop now</span>
       </div>
     </div>
   );
+
   return (
-    <section aria-roledescription="carousel">
-      {banner.linkUrl ? <a href={banner.linkUrl}>{inner}</a> : <Link href="/shop">{inner}</Link>}
-      {banners.length > 1 ? (
-        <div className="flex items-center justify-center gap-2 bg-forest py-3">
-          {banners.map((item, itemIndex) => (
-            <button
-              key={item.id}
-              type="button"
-              aria-label={`Show banner ${itemIndex + 1}`}
-              className={`h-2.5 w-2.5 rounded-full ${itemIndex === index ? "bg-gold" : "bg-cream/40"}`}
-              onClick={() => setIndex(itemIndex)}
-            />
-          ))}
-        </div>
+    <section
+      aria-roledescription="carousel"
+      className="relative bg-forest"
+      onTouchStart={(event) => {
+        touchX.current = event.touches[0]?.clientX ?? null;
+      }}
+      onTouchEnd={(event) => {
+        if (touchX.current == null || count < 2) return;
+        const dx = (event.changedTouches[0]?.clientX ?? touchX.current) - touchX.current;
+        touchX.current = null;
+        if (Math.abs(dx) < 48) return;
+        swiped.current = true;
+        go(index + (dx < 0 ? 1 : -1));
+      }}
+    >
+      {banner.linkUrl ? (
+        <a
+          href={banner.linkUrl}
+          onClick={(event) => {
+            if (!swiped.current) return;
+            event.preventDefault();
+            swiped.current = false;
+          }}
+        >
+          {slide}
+        </a>
+      ) : (
+        <Link
+          href="/shop"
+          onClick={(event) => {
+            if (!swiped.current) return;
+            event.preventDefault();
+            swiped.current = false;
+          }}
+        >
+          {slide}
+        </Link>
+      )}
+      {count > 1 ? (
+        <>
+          <button
+            type="button"
+            aria-label="Previous banner"
+            className="absolute left-3 top-[22%] grid h-11 w-11 -translate-y-1/2 place-items-center rounded-full bg-paper/95 text-forest shadow-md"
+            onClick={() => go(index - 1)}
+          >
+            <Chevron direction="left" />
+          </button>
+          <button
+            type="button"
+            aria-label="Next banner"
+            className="absolute right-3 top-[22%] grid h-11 w-11 -translate-y-1/2 place-items-center rounded-full bg-paper/95 text-forest shadow-md"
+            onClick={() => go(index + 1)}
+          >
+            <Chevron direction="right" />
+          </button>
+          <div className="absolute inset-x-0 bottom-4 flex items-center justify-center gap-2">
+            {banners.map((item, itemIndex) => (
+              <button
+                key={item.id}
+                type="button"
+                aria-label={`Show banner ${itemIndex + 1}`}
+                aria-current={itemIndex === index ? "true" : undefined}
+                className={`h-2 rounded-full transition ${itemIndex === index ? "w-6 bg-gold" : "w-2 bg-cream/70"}`}
+                onClick={() => setIndex(itemIndex)}
+              />
+            ))}
+          </div>
+        </>
       ) : null}
     </section>
+  );
+}
+
+function Chevron({ direction }: { direction: "left" | "right" }) {
+  return (
+    <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+      <path d={direction === "left" ? "M14.5 6.5 9 12l5.5 5.5" : "M9.5 6.5 15 12l-5.5 5.5"} strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
   );
 }
 

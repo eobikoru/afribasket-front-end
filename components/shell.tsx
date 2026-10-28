@@ -2,9 +2,10 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { formatUsd } from "@/lib/money";
 import { useCart, useCategories, useMe, useSession, useSettings } from "@/lib/queries";
+import { beginRoute } from "./route-progress";
 import { Logo } from "./logo";
 
 export function Shell({ children }: { children: React.ReactNode }) {
@@ -15,6 +16,20 @@ export function Shell({ children }: { children: React.ReactNode }) {
   const session = useSession();
   const [open, setOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
+
+  useEffect(() => {
+    if (!open) return;
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setOpen(false);
+    };
+    document.addEventListener("keydown", onKey);
+    const previous = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.removeEventListener("keydown", onKey);
+      document.body.style.overflow = previous;
+    };
+  }, [open]);
   const count = cart.data?.items.reduce((sum, line) => sum + line.quantity, 0) ?? 0;
   const storeName = settings.data?.storeName || "AfriBasket";
   const announcement =
@@ -29,7 +44,7 @@ export function Shell({ children }: { children: React.ReactNode }) {
         Skip to content
       </a>
       {announcement ? (
-        <div className="bg-gold px-4 py-2 text-center text-[13px] font-medium tracking-wide text-forest-deep">
+        <div className="bg-gold px-4 py-2 text-center text-xs font-medium leading-5 text-balance tracking-wide text-forest-deep sm:text-[13px]">
           {announcement}
         </div>
       ) : null}
@@ -40,12 +55,15 @@ export function Shell({ children }: { children: React.ReactNode }) {
             className="grid h-10 w-10 place-items-center rounded-md hover:bg-white/10 lg:hidden"
             aria-label={open ? "Close menu" : "Open menu"}
             aria-expanded={open}
-            onClick={() => setOpen((value) => !value)}
+            onClick={() => {
+              setOpen((value) => !value);
+              setSearchOpen(false);
+            }}
           >
-            <span className="flex w-5 flex-col gap-1.5">
-              <span className="h-px bg-cream" />
-              <span className="h-px bg-cream" />
-              <span className="h-px bg-cream" />
+            <span className="relative block h-3.5 w-5">
+              <span className={`absolute left-0 h-px w-5 bg-cream transition ${open ? "top-1.5 rotate-45" : "top-0"}`} />
+              <span className={`absolute left-0 top-1.5 h-px w-5 bg-cream transition ${open ? "opacity-0" : ""}`} />
+              <span className={`absolute left-0 h-px w-5 bg-cream transition ${open ? "top-1.5 -rotate-45" : "top-3"}`} />
             </span>
           </button>
           <Link href="/" aria-label={storeName} className="shrink-0">
@@ -57,7 +75,10 @@ export function Shell({ children }: { children: React.ReactNode }) {
               type="button"
               className="grid h-10 w-10 place-items-center rounded-md hover:bg-white/10 lg:hidden"
               aria-label="Search"
-              onClick={() => setSearchOpen((value) => !value)}
+              onClick={() => {
+                setSearchOpen((value) => !value);
+                setOpen(false);
+              }}
             >
               <SearchIcon />
             </button>
@@ -73,22 +94,25 @@ export function Shell({ children }: { children: React.ReactNode }) {
             </Link>
           </div>
         </div>
-        <nav className="hidden border-t border-white/10 lg:block" aria-label="Shop">
-          <div className="mx-auto flex max-w-6xl items-center gap-6 px-4 py-2.5 text-sm text-cream/90">
-            <Link href="/shop" className="hover:text-white">
-              Shop all
-            </Link>
-            {(categories.data ?? []).slice(0, 6).map((category) => (
-              <Link key={category.id} href={`/shop?category=${category.slug}`} className="hover:text-white">
-                {category.name}
+        <nav className="border-t border-white/10" aria-label="Shop">
+          <div className="relative">
+            <div className="mx-auto flex max-w-6xl gap-x-5 overflow-x-auto px-4 py-3 text-sm whitespace-nowrap text-cream/90 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+              <Link href="/shop" className="shrink-0 hover:text-white">
+                Shop all
               </Link>
-            ))}
-            <Link href="/blog" className="ml-auto hover:text-white">
-              Journal
-            </Link>
-            <Link href="/track" className="hover:text-white">
-              Track order
-            </Link>
+              {(categories.data ?? []).slice(0, 6).map((category) => (
+                <Link key={category.id} href={`/shop?category=${category.slug}`} className="shrink-0 hover:text-white">
+                  {category.name}
+                </Link>
+              ))}
+              <Link href="/blog" className="shrink-0 hover:text-white lg:ml-auto">
+                Journal
+              </Link>
+              <Link href="/track" className="shrink-0 pr-6 hover:text-white">
+                Track order
+              </Link>
+            </div>
+            <div className="pointer-events-none absolute inset-y-0 right-0 w-8 bg-gradient-to-l from-forest lg:hidden" />
           </div>
         </nav>
         {searchOpen ? (
@@ -96,27 +120,22 @@ export function Shell({ children }: { children: React.ReactNode }) {
             <SearchForm autoFocus onDone={() => setSearchOpen(false)} />
           </div>
         ) : null}
-      </header>
-      {open ? (
-        <div className="fixed inset-0 z-30 bg-forest-deep/40 lg:hidden" onClick={() => setOpen(false)}>
-          <div
-            className="h-full w-[min(100%,20rem)] overflow-y-auto bg-paper px-5 py-6 text-ink"
-            onClick={(event) => event.stopPropagation()}
-          >
-            <p className="text-xs uppercase tracking-[0.16em] text-stone">Browse</p>
-            <div className="mt-4 flex flex-col gap-3 text-lg">
-              <Link href="/shop" onClick={() => setOpen(false)}>
+        {open ? (
+          <nav className="absolute inset-x-0 top-full z-50 max-h-[calc(100dvh-7.5rem)] overflow-y-auto border-t border-line bg-paper text-ink shadow-lg lg:hidden" aria-label="Menu">
+            <p className="px-5 pt-4 text-xs uppercase tracking-[0.16em] text-stone">Browse</p>
+            <div className="mt-1 flex flex-col px-2 pb-2 text-base">
+              <Link href="/shop" onClick={() => setOpen(false)} className="rounded-md px-3 py-3 font-medium hover:bg-well">
                 Shop all
               </Link>
               {(categories.data ?? []).map((category) => (
                 <div key={category.id}>
-                  <Link href={`/shop?category=${category.slug}`} onClick={() => setOpen(false)} className="font-medium">
+                  <Link href={`/shop?category=${category.slug}`} onClick={() => setOpen(false)} className="block rounded-md px-3 py-3 font-medium hover:bg-well">
                     {category.name}
                   </Link>
                   {category.children.length > 0 ? (
-                    <div className="mt-2 flex flex-col gap-2 pl-3 text-base text-stone">
+                    <div className="flex flex-col pb-1 pl-4 text-sm text-stone">
                       {category.children.map((child) => (
-                        <Link key={child.id} href={`/shop?category=${child.slug}`} onClick={() => setOpen(false)}>
+                        <Link key={child.id} href={`/shop?category=${child.slug}`} onClick={() => setOpen(false)} className="rounded-md px-3 py-2.5 hover:bg-well">
                           {child.name}
                         </Link>
                       ))}
@@ -125,15 +144,18 @@ export function Shell({ children }: { children: React.ReactNode }) {
                 </div>
               ))}
             </div>
-            <div className="mt-8 flex flex-col gap-3 border-t border-line pt-5 text-base">
-              <Link href="/blog" onClick={() => setOpen(false)}>Journal</Link>
-              <Link href="/track" onClick={() => setOpen(false)}>Track an order</Link>
-              <Link href={session.accessToken ? "/account" : "/login"} onClick={() => setOpen(false)}>
+            <div className="flex flex-col border-t border-line px-2 py-2 text-base">
+              <Link href="/blog" onClick={() => setOpen(false)} className="rounded-md px-3 py-3 hover:bg-well">Journal</Link>
+              <Link href="/track" onClick={() => setOpen(false)} className="rounded-md px-3 py-3 hover:bg-well">Track an order</Link>
+              <Link href={session.accessToken ? "/account" : "/login"} onClick={() => setOpen(false)} className="rounded-md px-3 py-3 hover:bg-well">
                 {me.data ? `${me.data.firstName}'s account` : "Sign in"}
               </Link>
             </div>
-          </div>
-        </div>
+          </nav>
+        ) : null}
+      </header>
+      {open ? (
+        <button type="button" className="fixed inset-0 z-30 bg-forest-deep/40 lg:hidden" aria-label="Close menu" onClick={() => setOpen(false)} />
       ) : null}
       <main id="main" className="flex-1">
         {children}
@@ -153,7 +175,9 @@ function SearchForm({ className = "", autoFocus, onDone }: { className?: string;
         event.preventDefault();
         const data = new FormData(event.currentTarget);
         const q = String(data.get("q") ?? "").trim();
-        router.push(q ? `/shop?q=${encodeURIComponent(q)}` : "/shop");
+        const next = q ? `/shop?q=${encodeURIComponent(q)}` : "/shop";
+        if (next !== `${window.location.pathname}${window.location.search}`) beginRoute();
+        router.push(next);
         onDone?.();
       }}
     >

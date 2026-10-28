@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useState } from "react";
 import { ProductGrid } from "@/components/product-card";
+import { toast } from "@/components/toast";
 import { Button, controlClass, Field, Notice, Skeleton, Stars } from "@/components/ui";
 import { errorText } from "@/lib/api";
 import { ALLERGENS, availableCount, countryName, DIETARY, labelOf, REGIONS, STORAGE, unitPrice } from "@/lib/labels";
@@ -180,7 +181,7 @@ function BuyBox({ product }: { product: Product }) {
     }
     try {
       await add.mutateAsync({ productId: product.id, variantId: variant?.id, quantity: qty });
-      setNote("Added to your cart.");
+      toast("Added to cart");
     } catch (error) {
       setNote(errorText(error));
     }
@@ -232,10 +233,10 @@ function BuyBox({ product }: { product: Product }) {
           />
         </label>
         <Button className="min-w-40" disabled={!sellable || add.isPending} onClick={() => void onAdd()}>
-          {add.isPending ? "Adding…" : sellable ? "Add to cart" : "Unavailable"}
+          {add.isPending ? "Adding…" : sellable ? "Add to cart" : product.status === "coming_soon" ? "Coming soon" : "Out of stock"}
         </Button>
       </div>
-      {note ? <p className={`mt-3 text-sm ${note.startsWith("Added") ? "text-leaf" : "text-danger"}`}>{note}</p> : null}
+      {note ? <p className="mt-3 text-sm text-danger">{note}</p> : null}
       {product.tags.length > 0 ? (
         <p className="mt-6 text-sm text-stone">
           {product.tags.map((tag) => (

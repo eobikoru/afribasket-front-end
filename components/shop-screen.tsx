@@ -3,7 +3,8 @@
 import { useRouter, useSearchParams } from "next/navigation";
 import { useMemo, useState } from "react";
 import { ProductGrid } from "@/components/product-card";
-import { Button, controlClass, EmptyState, Field, Notice, Skeleton } from "@/components/ui";
+import { beginRoute } from "@/components/route-progress";
+import { Button, EmptyState, Field, Notice, Skeleton } from "@/components/ui";
 import { errorText } from "@/lib/api";
 import { DIETARY, REGIONS, SORTS, STORAGE } from "@/lib/labels";
 import { centsToDollarInput, dollarsToCents } from "@/lib/money";
@@ -28,13 +29,15 @@ export function ShopScreen() {
       else search.set(key, value);
     }
     if (resetPage) search.delete("page");
-    router.push(`/shop?${search.toString()}`);
+    const href = `/shop?${search.toString()}`;
+    if (href !== `${window.location.pathname}${window.location.search}`) beginRoute();
+    router.push(href);
   }
 
   const filters = (
     <form
       key={params.toString()}
-      className="grid gap-4"
+      className="grid gap-5 rounded-2xl bg-paper px-5 py-6 ring-1 ring-line"
       onSubmit={(event) => {
         event.preventDefault();
         const data = new FormData(event.currentTarget);
@@ -55,10 +58,10 @@ export function ShopScreen() {
       }}
     >
       <Field label="Search">
-        <input name="q" defaultValue={params.get("q") ?? ""} className={controlClass} />
+        <input name="q" defaultValue={params.get("q") ?? ""} placeholder="Palm oil, egusi, plantain" className="shop-control" />
       </Field>
       <Field label="Category">
-        <select name="category" defaultValue={params.get("category") ?? ""} className={controlClass}>
+        <select name="category" defaultValue={params.get("category") ?? ""} className="shop-control">
           <option value="">All shelves</option>
           {flat.map((category) => (
             <option key={category.id} value={category.slug}>
@@ -69,7 +72,7 @@ export function ShopScreen() {
         </select>
       </Field>
       <Field label="Region">
-        <select name="region" defaultValue={params.get("region") ?? ""} className={controlClass}>
+        <select name="region" defaultValue={params.get("region") ?? ""} className="shop-control">
           <option value="">Anywhere</option>
           {REGIONS.map((region) => (
             <option key={region.value} value={region.value}>
@@ -79,7 +82,7 @@ export function ShopScreen() {
         </select>
       </Field>
       <Field label="Storage">
-        <select name="storageType" defaultValue={params.get("storageType") ?? ""} className={controlClass}>
+        <select name="storageType" defaultValue={params.get("storageType") ?? ""} className="shop-control">
           <option value="">Any</option>
           {STORAGE.map((item) => (
             <option key={item.value} value={item.value}>
@@ -89,7 +92,7 @@ export function ShopScreen() {
         </select>
       </Field>
       <Field label="Diet">
-        <select name="dietary" defaultValue={params.get("dietary") ?? ""} className={controlClass}>
+        <select name="dietary" defaultValue={params.get("dietary") ?? ""} className="shop-control">
           <option value="">Any</option>
           {DIETARY.map((item) => (
             <option key={item.value} value={item.value}>
@@ -99,26 +102,26 @@ export function ShopScreen() {
         </select>
       </Field>
       <Field label="Country of origin" hint="Two-letter code, such as NG or GH.">
-        <input name="country" defaultValue={params.get("country") ?? ""} maxLength={2} className={controlClass} />
+        <input name="country" defaultValue={params.get("country") ?? ""} maxLength={2} className="shop-control uppercase tracking-[0.14em]" />
       </Field>
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-2 gap-4">
         <Field label="Min price">
-          <input name="min" defaultValue={params.get("min") ?? ""} inputMode="decimal" placeholder="0" className={controlClass} />
+          <input name="min" defaultValue={params.get("min") ?? ""} inputMode="decimal" placeholder="0" className="shop-control" />
         </Field>
         <Field label="Max price">
-          <input name="max" defaultValue={params.get("max") ?? ""} inputMode="decimal" placeholder="50" className={controlClass} />
+          <input name="max" defaultValue={params.get("max") ?? ""} inputMode="decimal" placeholder="50" className="shop-control" />
         </Field>
       </div>
-      <label className="flex items-center gap-2 text-sm">
-        <input type="checkbox" name="inStock" defaultChecked={params.get("inStock") === "true"} />
+      <label className="flex items-center gap-3 py-1 text-sm">
+        <input type="checkbox" name="inStock" defaultChecked={params.get("inStock") === "true"} className="size-4 accent-forest" />
         In stock only
       </label>
-      <Button type="submit" className="w-full">
+      <Button type="submit" className="mt-1 w-full py-3">
         Apply filters
       </Button>
       <button
         type="button"
-        className="text-sm text-stone underline"
+        className="justify-self-center text-sm text-stone underline underline-offset-4"
         onClick={() => {
           router.push("/shop");
           setFiltersOpen(false);
@@ -134,10 +137,10 @@ export function ShopScreen() {
       <p className="text-xs uppercase tracking-[0.16em] text-stone">Home / Shop</p>
       <div className="mt-2 flex flex-wrap items-end justify-between gap-4">
         <h1 className="font-display text-5xl text-forest">Shop</h1>
-        <label className="text-sm text-stone">
-          <span className="mr-2">Sort</span>
+        <label className="flex items-center gap-3 text-sm text-stone">
+          <span>Sort</span>
           <select
-            className="rounded-md border border-line bg-paper px-3 py-2 text-ink"
+            className="shop-control shop-sort"
             value={query.sort ?? "newest"}
             onChange={(event) => push({ sort: event.target.value === "newest" ? undefined : event.target.value })}
           >
@@ -149,7 +152,7 @@ export function ShopScreen() {
           </select>
         </label>
       </div>
-      <div className="mt-6 grid gap-8 lg:grid-cols-[16rem_1fr]">
+      <div className="mt-8 grid items-start gap-10 lg:grid-cols-[20rem_1fr]">
         <aside className="hidden lg:block">{filters}</aside>
         <div>
           <div className="mb-4 flex items-center justify-between gap-3 text-sm text-stone">

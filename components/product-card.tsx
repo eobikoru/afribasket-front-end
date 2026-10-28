@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useState } from "react";
+import { toast } from "@/components/toast";
 import { errorText } from "@/lib/api";
 import { countryName, labelOf, priceLabel, primaryImage, REGIONS, STORAGE } from "@/lib/labels";
 import { formatUsd } from "@/lib/money";
@@ -31,7 +32,7 @@ export function ProductCard({ product }: { product: Product }) {
     }
     try {
       await add.mutateAsync({ productId: product.id, quantity: 1 });
-      setNote("Added");
+      toast("Added to cart");
     } catch (error) {
       setNote(errorText(error));
     }
@@ -85,7 +86,7 @@ export function ProductCard({ product }: { product: Product }) {
               {sellable ? (add.isPending ? "Adding…" : "Add to cart") : product.status === "coming_soon" ? "Coming soon" : "Out of stock"}
             </button>
           )}
-          {note ? <p className={`mt-2 text-xs ${note === "Added" ? "text-leaf" : "text-danger"}`}>{note}</p> : null}
+          {note ? <p className="mt-2 text-xs text-danger">{note}</p> : null}
         </div>
       </div>
     </article>
